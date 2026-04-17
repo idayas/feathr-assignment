@@ -19,6 +19,9 @@ kube-delete:
 	kubectl delete -f ./k8s -R
 
 kube-serve:
+	kubectl wait --for=condition=ready pod -l app=mongo -n feathr --timeout=180s
+	kubectl wait --for=condition=ready pod -l app=elastic -n feathr --timeout=180s
+	kubectl wait --for=condition=ready pod -l app=api -n feathr --timeout=180s
 	kubectl port-forward svc/api 5070:5070 -n feathr
 
 kube-rollout:

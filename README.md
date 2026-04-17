@@ -47,7 +47,7 @@ ES_URL=http://elastic:9200  # If hostname not provided, will default to `http://
 These values are used to initialize MongoDB and configure the API connection to the database.
 
 **Test the full flow:**
-```bash
+```sh
 curl localhost:5070/seed                            # Seed 10 products
 curl localhost:5070/products                        # List products  
 curl localhost:5070/products/P0001                  # Fetch single product
@@ -56,7 +56,7 @@ curl localhost:5070/products/analytics              # Analytics
 ```
 
 ## Manual Kubernetes
-```bash
+```sh
 # Generate secrets
 kubectl create secret generic mongo-secret --from-env-file=.env --namespace feathr --dry-run=client -o yaml > .k8s/secrets/mongo-secret.yaml
 
@@ -74,9 +74,9 @@ kubectl port-forward svc/api 5070:5070 -n feathr
 
 ## Makefile
 
-This project contains a Makefile with some useful commands for building and deploying the application.
+This project contains a Makefile with some useful targets for building and deploying the application.
 
-```
+```sh
 kube-deploy             # Create namespace, format secrets, and deploy the entire cluster using `kubectl create`
 kube-apply              # Apply all resources at once
 kube-delete             # Delete all resources
