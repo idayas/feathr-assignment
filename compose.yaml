@@ -1,0 +1,37 @@
+# This compose file is for reference and not intended for production use
+# I used this compose file to test the application and image configurations 
+# locally before pushing the image to docker hub and deploying to k8s.
+services:
+  mongo:
+    image: mongo:8.2.7
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false      # No TLS/auth 
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m    # Memory caps
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - 5070:5070
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    depends_on:
+      - mongo
