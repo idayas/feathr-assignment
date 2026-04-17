@@ -1,3 +1,4 @@
+import random
 from pymongo import MongoClient, ReturnDocument
 from bson import json_util
 import json
@@ -110,28 +111,25 @@ def delete_product(product_id=None):
     return format_json({"status": "success"})
 
 def seed_data():
-    conn.insert_many([
-        {
-            "ProductId": get_next_product_id(),
-            "ProductName": "Product 1",
-            "ProductCategory": "Category 1",
-            "Price": 10.99,
-            "AvailableQuantity": 100
-        },
-        {
-            "ProductId": get_next_product_id(),
-            "ProductName": "Product 2",
-            "ProductCategory": "Category 2",
-            "Price": 19.99,
-            "AvailableQuantity": 50
-        },
-        {
-            "ProductId": get_next_product_id(),
-            "ProductName": "Product 3",
-            "ProductCategory": "Category 3",
-            "Price": 5.99,
-            "AvailableQuantity": 200
-        }
-    ])
+    categories = ["Electronics", "Clothing", "Food"]
+    adjectives = ["Premium", "Basic", "Smart", "Classic", "Fresh", "Deluxe"]
+    items = ["Mouse", "Keyboard", "Jacket", "Shoes", "Juice", "Snack"]
 
-    return format_json({"status": "success", "data": conn.find()})
+    products = []
+
+    for _ in range(10):
+        name = f"{random.choice(adjectives)} {random.choice(items)}"
+        category = random.choice(categories)
+        price = random.randint(5, 100) + 0.99
+        quantity = random.randint(1, 200)
+
+        products.append({
+            "ProductId": get_next_product_id(),
+            "ProductName": name,
+            "ProductCategory": category,
+            "Price": price,
+            "AvailableQuantity": quantity
+        })
+
+    conn.insert_many(products)
+    return format_json({"status": "success", "data": products})
