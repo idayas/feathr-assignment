@@ -131,7 +131,6 @@ kubectl port-forward svc/api 5070:5070 -n feathr
 
 ## Design Decisions
 
-
 | Decision | Why |
 |----------|-----|
 | **StatefulSets** (MongoDB/Elasticsearch) | Persistent data storage requires stable pod identity and durable volumes |
@@ -142,6 +141,8 @@ kubectl port-forward svc/api 5070:5070 -n feathr
 | **Resource requests/limits** | Prevent OOM kills, guarantee scheduling |
 | **Init containers** | Ensure MongoDB and Elasticsearch readiness before API startup |
 | **No Kibana** | Outside assignment scope; analytics exposed via REST API instead |
+| **ClusterIP on API** | Enables load-balancing capabilities between API. Can be set to LoadBalancer for external access |
+| **Docker Compose Prototype** | Validated images/connections/configurations before K8s port; enabled fast debugging without cluster overhead |
 
 ## Assignment Requirements ✓
 
