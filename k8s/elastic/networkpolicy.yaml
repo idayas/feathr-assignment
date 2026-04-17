@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: elastic
+  namespace: feathr
+spec:
+  podSelector:
+    matchLabels:
+      app: elastic
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: feathr
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: idayas/feathr-app:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5070
+              name: http
+          envFrom:
+            - secretRef:
+                name: mongo-secret
