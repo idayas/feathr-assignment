@@ -127,7 +127,7 @@ curl --request POST \
   --url http://127.0.0.1:5070/products \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data 'ProductName=Milk Steak' \
-  --data ProductCategory=Testino123 \
+  --data ProductCategory=Food \
   --data Price=12.34 \
   --data AvailableQuantity=10 \
   --data 'ProductDescription=She'\''ll know what it is'
