@@ -23,3 +23,14 @@ spec:
           envFrom:
             - secretRef:
                 name: mongo-secret
+      initContainers:
+        - name: wait-mongo
+          image: alpine:3.19
+          command: ['sh', '-c']
+          args:
+          - apk add --no-cache netcat-openbsd && until nc -z mongo 27017; do echo "Waiting..."; sleep 2; done;
+        - name: wait-elastic
+          image: alpine:3.19
+          command: ['sh', '-c']
+          args:
+          - apk add --no-cache curl && until curl -f http://elastic:9200/_cluster/health; do echo "Waiting..."; sleep 2; done;

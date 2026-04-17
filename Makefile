@@ -17,3 +17,10 @@ kube-apply:
 
 kube-delete:
 	kubectl delete -f ./k8s -R
+
+kube-serve:
+	kubectl port-forward svc/api 5070:5070 -n feathr
+
+kube-rollout:
+	kubectl apply -f ./k8s/api/deployment.yaml
+	kubectl rollout status deployment/api -n feathr
