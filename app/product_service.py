@@ -74,7 +74,9 @@ def create_product(name=None, category=None, price=None, quantity=None, descript
         "ProductCategory": category,
         "Price": price,
         "AvailableQuantity": quantity,
-        "ProductDescription": description
+        "ProductDescription": description,
+        "ViewCount": 0,
+        "SearchCount": 0
     }
 
     conn.insert_one(doc)
@@ -82,7 +84,12 @@ def create_product(name=None, category=None, price=None, quantity=None, descript
     # Get the latest product
     cleaned = strip_id(conn.find_one(sort=[("_id", -1)]))
 
-    es.index(index=es_index, id=doc["ProductId"], document=doc)
+    es_doc = dict(cleaned)
+    es_doc.pop("ViewCount", None)
+    es_doc.pop("SearchCount", None)
+
+    es.index(index=es_index, id=doc["ProductId"], document=es_doc)
+
     return format_json({"status": "success", "data": cleaned})
 
 
