@@ -140,8 +140,10 @@ def search_products(query=None):
     if not query:
         return format_json({"status": "error", "messages": ["Missing required field: query (string)"]})
 
+    query = query.replace(",", " ")
+
     res = es.search(index=es_index, query={
-        "match": { "ProductDescription": query }
+        "match": { "ProductDescription": {"query": query, "operator": "and"}}
     })
 
     products = []
@@ -150,6 +152,39 @@ def search_products(query=None):
         products.append(hit["_source"])
 
     return format_json({"status": "success", "data": products})
+
+def get_analytics():
+    total_products = conn.count_documents({})
+
+    avg_price_per_product_results = list(conn.aggregate([
+       {"$group": {"_id": None, "avg_price": {"$avg": "$Price"}}}
+    ]))
+
+    avg_price_per_cat_results = list(conn.aggregate([
+       {"$group": {"_id": "$ProductCategory", "avg_price": {"$avg": "$Price"}}}
+    ]))
+
+    total_in_category = list(conn.aggregate([
+       {"$group": {"_id": "$ProductCategory", "count": {"$sum": 1}}},
+       {"$sort": {"count": -1}}
+    ]))
+
+    avg_price_per_product = avg_price_per_product_results[0]["avg_price"] if avg_price_per_product_results else 0
+    avg_price_per_cat = avg_price_per_cat_results[0]["avg_price"] if avg_price_per_cat_results else 0
+
+    total_in_cat = {}
+    for t in total_in_category:
+        total_in_cat[t["_id"]] = int(t["count"])
+
+    return format_json({
+        "status": "success",
+        "data": {
+            "total_products": total_products,
+            "avg_price_per_product": float(f'{avg_price_per_product:.2f}'), 
+            "avg_price_per_cat": float(f'{avg_price_per_cat:.2f}'),
+            "total_in_category": total_in_cat 
+        }
+    })
 
 def seed_data():
     categories = ["Electronics", "Clothing", "Food"]

@@ -35,10 +35,14 @@ def product(product_id):
     elif request.method == 'DELETE':
         return product_service.delete_product(product_id)
 
-@app.route('/product/search', methods=['GET'])
+@app.route('/products/search', methods=['GET'])
 def search():
     query = request.args.get('query')
     return product_service.search_products(query)
+
+@app.route('/products/analytics', methods=['GET'])
+def analytics():
+    return product_service.get_analytics()
 
 @app.route('/seed', methods=['GET'])
 def seed():
