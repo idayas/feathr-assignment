@@ -15,11 +15,26 @@ def get_next_product_id():
     )
     return f"P{counter['seq']:04d}"
 
+def strip_id(product):
+    if not product:
+        return product
+
+    product = dict(product)
+    product.pop("_id", None)
+    return product
+
+
 def format_json(data):
     return json.loads(json_util.dumps(data))
 
 def get_all_products():
-    return format_json({"status": "success", "data": conn.find()})
+    products = conn.find()
+
+    cleaned = []
+    for product in products:
+        cleaned.append(strip_id(product))
+
+    return format_json({"status": "success", "data": cleaned})
 
 
 def create_product(name=None, category=None, price=None, quantity=None, description=None):
@@ -63,8 +78,12 @@ def create_product(name=None, category=None, price=None, quantity=None, descript
     }
 
     conn.insert_one(doc)
+    
+    # Get the latest product
+    cleaned = strip_id(conn.find_one(sort=[("_id", -1)]))
+
     es.index(index=es_index, id=doc["ProductId"], document=doc)
-    return format_json({"status": "success", "data": conn.find_one(sort=[("_id", -1)])})
+    return format_json({"status": "success", "data": cleaned})
 
 
 def get_product(product_id):
@@ -79,8 +98,10 @@ def get_product(product_id):
 
     if not product:
         return format_json({"status": "error", "messages": ["Product not found"]})
+
+    cleaned = strip_id(product)
     
-    return format_json({"status": "success", "data": product})
+    return format_json({"status": "success", "data": cleaned})
 
 def update_product(product_id=None, name=None, category=None, price=None, quantity=None, description=None):
     updates = {}
@@ -116,7 +137,9 @@ def update_product(product_id=None, name=None, category=None, price=None, quanti
 
     es.update(index=es_index, id=product_id, doc=updates)
 
-    return format_json({"status": "success", "data": conn.find_one({"ProductId": product_id})})
+    cleaned = strip_id(conn.find_one({"ProductId": product_id}))
+
+    return format_json({"status": "success", "data": cleaned})
 
 
 def delete_product(product_id=None):
@@ -191,6 +214,9 @@ def get_analytics():
        {"$limit": 5}
     ]))
 
+    most_searched = [strip_id(p) for p in most_searched]
+    most_viewed = [strip_id(p) for p in most_viewed]
+
     avg_price_per_product = avg_price_per_product_results[0]["avg_price"] if avg_price_per_product_results else 0
     avg_price_per_cat = avg_price_per_cat_results[0]["avg_price"] if avg_price_per_cat_results else 0
 
@@ -236,6 +262,8 @@ def seed_data():
 
     conn.insert_many(products)
 
+    products = [strip_id(p) for p in products]
+
     # NOTE: There is probably a better way to do this
     for product in products:
 
@@ -243,7 +271,6 @@ def seed_data():
         # to prevent it from erroring when sending to elastic
 
         es_doc = dict(product) 
-        es_doc.pop("_id", None)
         es_doc.pop("ViewCount", None)
         es_doc.pop("SearchCount", None)
         es.index(index="products", id=product["ProductId"], document=es_doc)
