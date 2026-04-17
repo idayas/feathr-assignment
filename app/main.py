@@ -11,7 +11,8 @@ def products():
         name = request.form.get('name')
         category = request.form.get( 'category' )
         price = request.form.get( 'price' )
-        return product_service.create_product(name, category, price)
+        quantity = request.form.get( 'quantity' )
+        return product_service.create_product(name, category, price, quantity)
 
 
 @app.route('/product/<string:product_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -22,7 +23,8 @@ def product(product_id):
         name = request.form.get('name')
         category = request.form.get( 'category' )
         price = request.form.get( 'price' )
-        return product_service.update_product(product_id, name, category, price)
+        quantity = request.form.get( 'quantity' )
+        return product_service.update_product(product_id, name, category, price, quantity)
     elif request.method == 'DELETE':
         return product_service.delete_product(product_id)
 
