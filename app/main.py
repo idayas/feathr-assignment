@@ -48,6 +48,10 @@ def analytics():
 def seed():
     return product_service.seed_data()
 
+@app.errorhandler(404)
+def not_found(error):
+    return product_service.format_json({"status": "error", "messages": ["Resource not found"]})
+
 if __name__ == '__main__': 
     app.run(host='0.0.0.0', port='5070', debug = True) 
     
