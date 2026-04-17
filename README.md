@@ -74,7 +74,7 @@ kubectl port-forward svc/api 5070:5070 -n feathr
 
 ## Makefile
 
-This project contains a Makefile with some useful commands for building and deploying the application.
+This project contains a Makefile with some useful targets for building and deploying the application.
 
 ```
 kube-deploy             # Create namespace, format secrets, and deploy the entire cluster using `kubectl create`
