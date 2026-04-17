@@ -1,9 +1,14 @@
 # Project Overview
 An inventory management system built with Flask, MongoDB, Elasticsearch, Docker, and Kubernetes. It supports product CRUD, full-text description searching, seeding sample data, and an analytics endpoint for inventory insights.
 
+
 ## Architecture Overview
 Flask API handles all the requests, coordinating between MongoDB (primary data store) and Elasticsearch (search index) based on the request. Products sync to Elasticsearch on create/update/delete for search capability.
 Kubernetes manages MongoDB and Elasticsearch as StatefulSets for data persistence and uses Deployments for the API. NetworkPolicies restrict access between Pods. Everything is isolated using the `feathr` namespace with resource limits, mostly non-root containers, and init containers for dependency ordering.
+
+## Prerequisites
+- Docker (for building the images)
+- Kubernetes (for deploying to the cluster, can use `minikube` or similar local cluster tools)
 
 ## Features
 - Complete product CRUD via REST API
@@ -14,7 +19,76 @@ Kubernetes manages MongoDB and Elasticsearch as StatefulSets for data persistenc
 - Multi-stage Docker builds for minimal, secure images
 - Automated sample data generator for testing (`/seed`)
 
-## Products Data Model
+# Running The Application
+
+## Quickstart
+```bash
+cp .env.example .env
+make kube-deploy        # Freshly deploys to k8s
+make kube-serve         # Port forward to localhost:5070
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` before deploying:
+
+```env
+MONGO_INITDB_ROOT_USERNAME=root
+MONGO_INITDB_ROOT_PASSWORD=example
+MONGO_USERNAME=root
+MONGO_PASSWORD=example
+
+# Optional
+MONGO_HOST=mongo            # If hostname not provided, will default to `mongo`
+MONGO_PORT=27017            # If port not provided, will default to `27017`
+ES_URL=http://elastic:9200  # If hostname not provided, will default to `http://elastic:9200`
+```
+
+These values are used to initialize MongoDB and configure the API connection to the database.
+
+**Test the full flow:**
+```bash
+curl localhost:5070/seed                            # Seed 10 products
+curl localhost:5070/products                        # List products  
+curl localhost:5070/products/P0001                  # Fetch single product
+curl "localhost:5070/products/search?query=mouse"   # Search works (comma separated for multiple keywords)
+curl localhost:5070/products/analytics              # Analytics
+```
+
+## Manual Kubernetes
+```bash
+# Generate secrets
+kubectl create secret generic mongo-secret --from-env-file=.env --namespace feathr --dry-run=client -o yaml > .k8s/secrets/mongo-secret.yaml
+
+# Deploy (dependency order)
+kubectl apply -f .k8s/namespace.yaml
+kubectl apply -f .k8s/secrets/ -R
+kubectl apply -f .k8s/mongo/ -R
+kubectl apply -f .k8s/elastic/ -R
+kubectl apply -f .k8s/api/ -R
+kubectl apply -f .k8s/networkpolicies/ -R
+
+# Access
+kubectl port-forward svc/api 5070:5070 -n feathr
+```
+
+## Makefile
+
+This project contains a Makefile with some useful commands for building and deploying the application.
+
+```
+kube-deploy             # Create namespace, format secrets, and deploy the entire cluster using `kubectl create`
+kube-apply              # Apply all resources at once
+kube-delete             # Delete all resources
+kube-serve              # Port forward to localhost:5070
+kube-rollout            # Rollout the API deployment
+kube-reboot             # Runs kube-delete and kube-apply commands
+
+docker-build            # Build the API image and push to dockerhub
+```
+
+# API Reference
+## Products Schema
 
 Products require these minimum fields:
 
@@ -76,58 +150,7 @@ curl --request POST \
 }
 ```
 
-# Running The Application
-
-## Environment Variables
-
-Copy `.env.example` to `.env` before deploying:
-
-```env
-MONGO_INITDB_ROOT_USERNAME=root
-MONGO_INITDB_ROOT_PASSWORD=example
-MONGO_USERNAME=root 
-MONGO_PASSWORD=example
-
-# Optional
-MONGO_HOST=mongo            # If hostname not provided, will default to `mongo`
-MONGO_PORT=27017            # If port not provided, will default to `27017`
-ES_URL=http://elastic:9200  # If hostname not provided, will default to `http://elastic:9200`
-```
-
-These values are used to initialize MongoDB and configure the API connection to the database.
-
-## Quickstart
-```bash
-cp .env.example .env
-make kube-deploy        # Freshly deploys to k8s
-make kube-serve         # Port forward to localhost:5070
-```
-
-**Test the full flow:**
-```bash
-curl localhost:5070/seed                            # Seed 10 products
-curl localhost:5070/products                        # List products  
-curl localhost:5070/products/P0001                  # Fetch single product
-curl "localhost:5070/products/search?query=mouse"   # Search works (comma separated for multiple keywords)
-curl localhost:5070/products/analytics              # Analytics
-```
-
-## Manual Kubernetes
-```bash
-# Generate secrets
-kubectl create secret generic mongo-secret --from-env-file=.env --namespace feathr --dry-run=client -o yaml > .k8s/secrets/mongo-secret.yaml
-
-# Deploy (dependency order)
-kubectl apply -f .k8s/namespace.yaml
-kubectl apply -f .k8s/secrets/ -R
-kubectl apply -f .k8s/mongo/ -R
-kubectl apply -f .k8s/elastic/ -R
-kubectl apply -f .k8s/api/ -R
-kubectl apply -f .k8s/networkpolicies/ -R
-
-# Access
-kubectl port-forward svc/api 5070:5070 -n feathr
-```
+# Project Review
 
 ## Design Decisions
 
@@ -166,8 +189,9 @@ kubectl port-forward svc/api 5070:5070 -n feathr
 
 **Repo includes:** Flask API source code with Dockerfile, Kubernetes manifests (namespace/secrets/mongo/elastic/api/networkpolicies), Makefile, .env.example
 
-## Next Steps
+# Next Steps
 Given more time to work on the project and see it through beyond a demo, I would:
 - Add proper HTTP status codes on responses
 - Implement CI/CD pipeline for building, tagging, and publishing images to Docker Hub
 - Add Kibana dashboard for analytics
+- Use a non-root user for MongoDB operations
