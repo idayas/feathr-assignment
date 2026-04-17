@@ -57,7 +57,7 @@ def create_product(name=None, category=None, price=None, quantity=None, descript
             errors.append("price must be a number")
 
 
-    if not quantity and price != 0:
+    if not quantity and quantity != 0:
         errors.append("Missing required field: quantity (number)")
     else:
         try:
@@ -122,7 +122,7 @@ def update_product(product_id=None, name=None, category=None, price=None, quanti
         updates["ProductCategory"] = category
 
 
-    if category is not None:
+    if description is not None:
         updates["ProductDescription"] = description 
 
     if price is not None:
@@ -280,6 +280,6 @@ def seed_data():
         es_doc = dict(product) 
         es_doc.pop("ViewCount", None)
         es_doc.pop("SearchCount", None)
-        es.index(index="products", id=product["ProductId"], document=es_doc)
+        es.index(index=es_index, id=product["ProductId"], document=es_doc)
 
     return format_json({"status": "success", "data": products})

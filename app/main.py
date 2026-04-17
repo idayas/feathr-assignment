@@ -11,11 +11,11 @@ def products():
     if request.method == 'GET':
         return product_service.get_all_products()
     elif request.method == 'POST':
-        name = request.form.get('name')
-        category = request.form.get( 'category' )
-        price = request.form.get( 'price' )
-        quantity = request.form.get( 'quantity' )
-        description = request.form.get( 'description' )
+        name = request.form.get('ProductName')
+        category = request.form.get( 'ProductCategory' )
+        price = request.form.get( 'Price' )
+        quantity = request.form.get( 'AvailableQuantity' )
+        description = request.form.get( 'ProductDescription' )
         return product_service.create_product(name, category, price, quantity, description)
     elif request.method == 'DELETE':
         return product_service.delete_all_products()
@@ -26,11 +26,11 @@ def product(product_id):
     if request.method == 'GET':
         return product_service.get_product(product_id)
     elif request.method == 'PUT':
-        name = request.form.get('name')
-        category = request.form.get( 'category' )
-        price = request.form.get( 'price' )
-        quantity = request.form.get( 'quantity' )
-        description = request.form.get( 'description' )
+        name = request.form.get('ProductName')
+        category = request.form.get( 'ProductCategory' )
+        price = request.form.get( 'Price' )
+        quantity = request.form.get( 'AvailableQuantity' )
+        description = request.form.get( 'ProductDescription' )
         return product_service.update_product(product_id, name, category, price, quantity, description)
     elif request.method == 'DELETE':
         return product_service.delete_product(product_id)
@@ -50,7 +50,7 @@ def seed():
 
 @app.errorhandler(404)
 def not_found(error):
-    return product_service.format_json({"status": "error", "messages": ["Resource not found"]})
+    return product_service.format_json({"status": "error", "messages": ["Resource not found"]}), 400
 
 if __name__ == '__main__': 
     app.run(host='0.0.0.0', port='5070', debug = True) 
