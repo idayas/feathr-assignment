@@ -71,10 +71,16 @@ def get_product(product_id):
     if product_id is None:
         return format_json({"status": "error", "messages": ["Missing required field: product_id (string)"]})
 
-    if not conn.find_one({"ProductId": product_id}):
+    product = conn.find_one_and_update(
+        {"ProductId": product_id},
+        {"$inc": {"ViewCount": 1}},
+        return_document=ReturnDocument.AFTER
+    )
+
+    if not product:
         return format_json({"status": "error", "messages": ["Product not found"]})
     
-    return format_json({"status": "success", "data": conn.find_one({"ProductId": product_id})})
+    return format_json({"status": "success", "data": product})
 
 def update_product(product_id=None, name=None, category=None, price=None, quantity=None, description=None):
     updates = {}
@@ -147,9 +153,15 @@ def search_products(query=None):
     })
 
     products = []
+    product_ids = []
 
     for hit in res["hits"]["hits"]:
-        products.append(hit["_source"])
+        p = hit["_source"]
+        products.append(p)
+        product_ids.append(p["ProductId"])
+
+    if product_ids:
+        conn.update_many({"ProductId": {"$in": product_ids}}, {"$inc": {"SearchCount": 1}})
 
     return format_json({"status": "success", "data": products})
 
@@ -169,6 +181,16 @@ def get_analytics():
        {"$sort": {"count": -1}}
     ]))
 
+    most_searched = list(conn.aggregate([
+       {"$sort": {"SearchCount": -1}},
+       {"$limit": 5}
+    ]))
+
+    most_viewed = list(conn.aggregate([
+       {"$sort": {"ViewCount": -1}},
+       {"$limit": 5}
+    ]))
+
     avg_price_per_product = avg_price_per_product_results[0]["avg_price"] if avg_price_per_product_results else 0
     avg_price_per_cat = avg_price_per_cat_results[0]["avg_price"] if avg_price_per_cat_results else 0
 
@@ -179,6 +201,8 @@ def get_analytics():
     return format_json({
         "status": "success",
         "data": {
+            "most_searched": most_searched,
+            "most_viewed": most_viewed,
             "total_products": total_products,
             "avg_price_per_product": float(f'{avg_price_per_product:.2f}'), 
             "avg_price_per_cat": float(f'{avg_price_per_cat:.2f}'),
@@ -205,7 +229,9 @@ def seed_data():
             "ProductCategory": category,
             "Price": price,
             "AvailableQuantity": quantity,
-            "ProductDescription": f"This item is a {name} in the {category} category"
+            "ProductDescription": f"This item is a {name} in the {category} category",
+            "ViewCount": 0,
+            "SearchCount": 0
         })
 
     conn.insert_many(products)
@@ -218,6 +244,8 @@ def seed_data():
 
         es_doc = dict(product) 
         es_doc.pop("_id", None)
+        es_doc.pop("ViewCount", None)
+        es_doc.pop("SearchCount", None)
         es.index(index="products", id=product["ProductId"], document=es_doc)
 
     return format_json({"status": "success", "data": products})
