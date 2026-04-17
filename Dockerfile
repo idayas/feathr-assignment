@@ -1,5 +1,9 @@
 FROM python:3.9-slim
 
+RUN useradd -m -u 1000 nonroot 
+
+USER nonroot
+
 WORKDIR /app
 
 COPY ./app /app
