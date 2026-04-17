@@ -20,16 +20,19 @@ def format_json(data):
     return json.loads(json_util.dumps(data))
 
 def get_all_products():
-    return format_json(conn.find())
+    return format_json({"status": "success", "data": conn.find()})
 
 
-def create_product(name=None, category=None, price=None, quantity=None):
+def create_product(name=None, category=None, price=None, quantity=None, description=None):
     errors = []
     if not name:
         errors.append("Missing required field: name (string)")
 
     if not category:
         errors.append("Missing required field: category (string)")
+
+    if not description:
+        errors.append("Missing required field: description (string)")
 
     if not price and price != 0:
         errors.append("Missing required field: price (number)")
@@ -56,7 +59,8 @@ def create_product(name=None, category=None, price=None, quantity=None):
         "ProductName": name,
         "ProductCategory": category,
         "Price": price,
-        "AvailableQuantity": quantity
+        "AvailableQuantity": quantity,
+        "ProductDescription": description
     })
     return format_json({"status": "success", "data": conn.find_one(sort=[("_id", -1)])})
 
@@ -70,7 +74,7 @@ def get_product(product_id):
     
     return format_json({"status": "success", "data": conn.find_one({"ProductId": product_id})})
 
-def update_product(product_id=None, name=None, category=None, price=None, quantity=None):
+def update_product(product_id=None, name=None, category=None, price=None, quantity=None, description=None):
     updates = {}
     if product_id is None:
         return format_json({"status": "error", "messages": ["Missing required field: product_id (string)"]})
@@ -80,6 +84,10 @@ def update_product(product_id=None, name=None, category=None, price=None, quanti
 
     if category is not None:
         updates["ProductCategory"] = category
+
+
+    if category is not None:
+        updates["ProductDescription"] = description 
 
     if price is not None:
         try:
@@ -110,6 +118,12 @@ def delete_product(product_id=None):
 
     return format_json({"status": "success"})
 
+
+def delete_all_products(): 
+    # NOTE: This would not be ideal in production, this is just to make it eaiser for testing
+    result = conn.delete_many({})
+    return format_json({"status": "success", "messages": ["Deleted all products"]})
+
 def seed_data():
     categories = ["Electronics", "Clothing", "Food"]
     adjectives = ["Premium", "Basic", "Smart", "Classic", "Fresh", "Deluxe"]
@@ -128,7 +142,8 @@ def seed_data():
             "ProductName": name,
             "ProductCategory": category,
             "Price": price,
-            "AvailableQuantity": quantity
+            "AvailableQuantity": quantity,
+            "ProductDescription": f"This item is a {name} in the {category} category"
         })
 
     conn.insert_many(products)

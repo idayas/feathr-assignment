@@ -3,7 +3,7 @@ import product_service
 
 app = Flask(__name__)
 
-@app.route('/products', methods=['GET', 'POST'])
+@app.route('/products', methods=['GET', 'POST', 'DELETE'])
 def products():
     if request.method == 'GET':
         return product_service.get_all_products()
@@ -12,7 +12,10 @@ def products():
         category = request.form.get( 'category' )
         price = request.form.get( 'price' )
         quantity = request.form.get( 'quantity' )
-        return product_service.create_product(name, category, price, quantity)
+        description = request.form.get( 'description' )
+        return product_service.create_product(name, category, price, quantity, description)
+    elif request.method == 'DELETE':
+        return product_service.delete_all_products()
 
 
 @app.route('/product/<string:product_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -24,7 +27,8 @@ def product(product_id):
         category = request.form.get( 'category' )
         price = request.form.get( 'price' )
         quantity = request.form.get( 'quantity' )
-        return product_service.update_product(product_id, name, category, price, quantity)
+        description = request.form.get( 'description' )
+        return product_service.update_product(product_id, name, category, price, quantity, description)
     elif request.method == 'DELETE':
         return product_service.delete_product(product_id)
 
