@@ -35,6 +35,11 @@ def product(product_id):
     elif request.method == 'DELETE':
         return product_service.delete_product(product_id)
 
+@app.route('/product/search', methods=['GET'])
+def search():
+    query = request.args.get('query')
+    return product_service.search_products(query)
+
 @app.route('/seed', methods=['GET'])
 def seed():
     return product_service.seed_data()

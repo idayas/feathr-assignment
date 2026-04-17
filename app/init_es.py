@@ -1,6 +1,4 @@
-from clients import es
-
-INDEX = "products"
+from clients import es, es_index as INDEX
 
 def init_elasticsearch():
     if es.indices.exists(index=INDEX):

@@ -1,4 +1,4 @@
-from clients import db, es
+from clients import db, es, es_index
 from pymongo import ReturnDocument
 from bson import json_util
 import json
@@ -53,14 +53,17 @@ def create_product(name=None, category=None, price=None, quantity=None, descript
     if errors:
         return format_json({"status": "error", "error": "Missing required fields", "messages": errors})
 
-    conn.insert_one({
+    doc = {
         "ProductId": get_next_product_id(),
         "ProductName": name,
         "ProductCategory": category,
         "Price": price,
         "AvailableQuantity": quantity,
         "ProductDescription": description
-    })
+    }
+
+    conn.insert_one(doc)
+    es.index(index=es_index, id=doc["ProductId"], document=doc)
     return format_json({"status": "success", "data": conn.find_one(sort=[("_id", -1)])})
 
 
@@ -104,6 +107,9 @@ def update_product(product_id=None, name=None, category=None, price=None, quanti
         return format_json({"status": "error", "messages": ["No fields to update"]})
 
     conn.update_one({"ProductId": product_id}, {"$set": updates})
+
+    es.update(index=es_index, id=product_id, doc=updates)
+
     return format_json({"status": "success", "data": conn.find_one({"ProductId": product_id})})
 
 
@@ -115,13 +121,35 @@ def delete_product(product_id=None):
     if result.deleted_count == 0:
         return format_json({"status": "error", "messages": ["Product not found"]})
 
+    es.delete(index=es_index, id=product_id)
+
     return format_json({"status": "success"})
 
 
 def delete_all_products(): 
     # NOTE: This would not be ideal in production, this is just to make it eaiser for testing
     result = conn.delete_many({})
+
+    db.counters.update_one({"_id": "productId"}, {"$set": {"seq": 0}})
+
+    es.delete_by_query(index=es_index, query={"match_all": {}})
+
     return format_json({"status": "success", "messages": ["Deleted all products"]})
+
+def search_products(query=None):
+    if not query:
+        return format_json({"status": "error", "messages": ["Missing required field: query (string)"]})
+
+    res = es.search(index=es_index, query={
+        "match": { "ProductDescription": query }
+    })
+
+    products = []
+
+    for hit in res["hits"]["hits"]:
+        products.append(hit["_source"])
+
+    return format_json({"status": "success", "data": products})
 
 def seed_data():
     categories = ["Electronics", "Clothing", "Food"]
@@ -146,4 +174,15 @@ def seed_data():
         })
 
     conn.insert_many(products)
+
+    # NOTE: There is probably a better way to do this
+    for product in products:
+
+        # Mongo mutates the original product object and adds an _id, so we make a copy and remove it
+        # to prevent it from erroring when sending to elastic
+
+        es_doc = dict(product) 
+        es_doc.pop("_id", None)
+        es.index(index="products", id=product["ProductId"], document=es_doc)
+
     return format_json({"status": "success", "data": products})

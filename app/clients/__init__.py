@@ -1,2 +1,2 @@
 from .mongo import db #. for relative import
-from .elastic import es
+from .elastic import es, es_index
