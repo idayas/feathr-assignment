@@ -92,16 +92,16 @@ docker-build            # Build the API image and push to dockerhub
 
 Products require these minimum fields:
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| ProductId | String | Auto | The unique identifier for the product (e.g., "P0001"), auto-generated |
-| ProductName | String | Yes | The name of the product |
-| ProductCategory | String | Yes | Category of the product (e.g., "Electronics", "Food") |
-| Price | Float | Yes | Price of the product |
-| AvailableQuantity | Int | Yes | Availabel quantity of the product |
-| Description | String | Yes | Searchable, detailed description |
-| ViewCount | Int  | Auto     | Incremented on GET |
-| SearchCount | Int   | Auto     | Incremented on search |
+| Field | Type | Required | Editable | Description |
+| --- | --- | --- | --- | --- |
+| ProductName | String | Yes | Yes | The name of the product |
+| ProductCategory | String | Yes | Yes | Category of the product (e.g., "Electronics", "Food") |
+| Price | Float | Yes | Yes | Price of the product |
+| AvailableQuantity | Int | Yes | Yes | Availabel quantity of the product |
+| ProductDescription | String | Yes | Yes | Searchable, detailed description |
+| ProductId | String | Auto | No | The unique identifier for the product (e.g., "P0001"), auto-generated |
+| ViewCount | Int  | Auto | No | Incremented on GET |
+| SearchCount | Int   | Auto | No | Incremented on search |
 
 ## Endpoints (todo: add expected fields)
 ```
