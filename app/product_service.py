@@ -1,10 +1,9 @@
-import random
-from pymongo import MongoClient, ReturnDocument
+from clients import db, es
+from pymongo import ReturnDocument
 from bson import json_util
 import json
+import random
 
-client = MongoClient('mongo', 27017, username='root', password='example')
-db = client.feathr
 conn = db.products
 
 def get_next_product_id():

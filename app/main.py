@@ -1,7 +1,10 @@
 from flask import Flask, request
+from init_es import init_elasticsearch
 import product_service
 
 app = Flask(__name__)
+
+init_elasticsearch()
 
 @app.route('/products', methods=['GET', 'POST', 'DELETE'])
 def products():
