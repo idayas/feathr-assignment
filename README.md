@@ -103,7 +103,7 @@ Products require these minimum fields:
 | ViewCount | Int  | Auto | No | Incremented on GET |
 | SearchCount | Int   | Auto | No | Incremented on search |
 
-## Endpoints (todo: add expected fields)
+## Endpoints 
 ```
 Products:
 GET    /products                    # List all products
